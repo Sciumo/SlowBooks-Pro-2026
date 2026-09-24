@@ -805,6 +805,23 @@ a:hover { text-decoration: underline; }
     box-shadow: 4px 4px 12px rgba(0,0,0,0.3);
 }
 
+/* A dialog for a form with a wide line-item table: as wide as the window
+   allows, up to 1280px. Opened with openModal(title, html, { wide: true }). */
+.modal.modal--wide {
+    max-width: min(1280px, 96vw);
+}
+
+/* A line-item table with more columns than the dialog is wide scrolls
+   sideways inside its container instead of losing its last columns behind
+   overflow: hidden (#174: the job cost entry's Bill? column and the remove
+   button were cut off, with no way to reach them). */
+.table-container--scroll {
+    overflow-x: auto;
+}
+.table-container--scroll .line-items-table {
+    min-width: 1180px;
+}
+
 .modal-header {
     display: flex;
     justify-content: space-between;
