@@ -57,7 +57,8 @@ Customize: **P&L: Year to Date** with cumulative net by month, and a
 **Balance Sheet Trend** over the last twelve month-ends that balances at
 every point and agrees with the report. Contributed by @jarvis4openclaw
 (#166). The chart of accounts import offers a CSV template. 2.16.1 fixes
-Wave's full export importing no journals after a passing dry run (#169).
+Wave's full export importing no journals after a passing dry run (#169);
+2.16.2 puts the estimate and job-cost line-item forms right (#174, #176).
 
 **v2.15 — Your chart, from your file.** Import a chart of accounts from a
 CSV in the export's own columns, any spreadsheet with Number / Name / Type,

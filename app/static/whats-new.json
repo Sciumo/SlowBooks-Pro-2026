@@ -1,4 +1,12 @@
 {
+  "2.16.2": {
+    "title": "Two line-item forms, put right",
+    "items": [
+      "Estimates: the line-item cells follow their headings again (quantity sat under Cost code); picking an item fills its cost",
+      "Job Cost Entry: the dialog opens as wide as your window and the cost lines scroll instead of being cut off",
+      "Docker: the production compose passes TRUST_PROXY_HEADERS through; a cloud-hosting guide is in docs/"
+    ]
+  },
   "2.16.1": {
     "title": "Wave's full export imports its journals",
     "items": [

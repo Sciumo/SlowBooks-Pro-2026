@@ -7,6 +7,8 @@ on what the software does, not on what sprint shipped what.
 
 ## [Unreleased]
 
+### v2.16.2 — Two line-item forms, put right
+
 **The estimate's line items line up with their headings** (#176, @cnbarry1).
 The header read Item, Description, Cost code, Cost, Qty while the cells
 underneath ran Qty, Cost code, Cost — so the quantity sat under *Cost code*
@@ -22,6 +24,14 @@ and the selects had shrunk to a few characters. The dialog opens as wide as
 the window allows, the table scrolls sideways when that is still not enough,
 and every control keeps a readable width. Any dialog with a wide table can
 ask for the same with `openModal(title, html, { wide: true })`.
+
+**Hosting your own books on a cloud server has a guide**, `docs/cloud-hosting.md`
+— one VPS, Docker, a proxy with a real certificate, backups off the box, and
+what the setup does and does not give you. On the way, the production
+compose file now passes `TRUST_PROXY_HEADERS` into the container, so the
+proxy trust the TLS guide describes takes effect under Docker.
+
+No schema change. An existing company file opens with no upgrade step.
 
 ### v2.16.1 — Wave's full export imports its journals
 
