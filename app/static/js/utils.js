@@ -63,18 +63,23 @@ function toastAction(message, actionLabel, onClick, ms = 8000) {
 let _modalOpener = null;
 const _FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function openModal(title, html) {
+// opts.wide: a form whose rows are wider than a dialog — the line-item
+// tables with ten or eleven columns (job cost entry). The default 700px
+// dialog clipped the last columns of that table with no scrollbar (#174).
+function openModal(title, html, opts) {
     _modalOpener = document.activeElement;
     $('#modal-title').textContent = title;
     $('#modal-body').innerHTML = html;
     $('#modal-overlay').classList.remove('hidden');
     const modal = $('#modal');
+    modal.classList.toggle('modal--wide', !!(opts && opts.wide));
     const first = modal.querySelector('#modal-body ' + _FOCUSABLE.split(', ').join(', #modal-body ')) || modal;
     setTimeout(() => { try { first.focus(); } catch (e) { /* nothing focusable */ } }, 0);
 }
 
 function closeModal() {
     $('#modal-overlay').classList.add('hidden');
+    $('#modal').classList.remove('modal--wide');
     const opener = _modalOpener;
     _modalOpener = null;
     if (opener && document.contains(opener)) { try { opener.focus(); } catch (e) { /* gone */ } }

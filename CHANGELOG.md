@@ -7,6 +7,14 @@ on what the software does, not on what sprint shipped what.
 
 ## [Unreleased]
 
+**The Job Cost Entry dialog shows all of its cost lines** (#174, @cnbarry1).
+Eleven columns in a 700-pixel dialog whose table hid its overflow: the
+Bill? column and the remove button were cut off with no way to reach them,
+and the selects had shrunk to a few characters. The dialog opens as wide as
+the window allows, the table scrolls sideways when that is still not enough,
+and every control keeps a readable width. Any dialog with a wide table can
+ask for the same with `openModal(title, html, { wide: true })`.
+
 ### v2.16.1 — Wave's full export imports its journals
 
 **Wave's full export imports its journals** (#169, @rcavatar1-debug). Wave's
