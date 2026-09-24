@@ -7,6 +7,14 @@ on what the software does, not on what sprint shipped what.
 
 ## [Unreleased]
 
+**The estimate's line items line up with their headings** (#176, @cnbarry1).
+The header read Item, Description, Cost code, Cost, Qty while the cells
+underneath ran Qty, Cost code, Cost — so the quantity sat under *Cost code*
+and the cost code under *Cost*. The cells follow the header now; picking an
+item fills its standard cost as the line's cost, blank if it has none and
+yours to overwrite; the item select keeps a readable width; and the form
+opens wide, its table scrolling sideways when the window is narrower still.
+
 **The Job Cost Entry dialog shows all of its cost lines** (#174, @cnbarry1).
 Eleven columns in a 700-pixel dialog whose table hid its overflow: the
 Bill? column and the remove button were cut off with no way to reach them,
