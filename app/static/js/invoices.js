@@ -346,6 +346,7 @@ const InvoicesPage = {
     },
 
     customerSelected(customerId) {
+        setTimeout(() => InvoicesPage.recalc(), 0);
         if (customerId === '__new__') {
             const form = $('#inv-new-customer-form');
             if (form) form.style.display = 'block';
@@ -405,6 +406,7 @@ const InvoicesPage = {
         const tbody = $('#inv-lines');
         const idx = InvoicesPage.lineCount++;
         tbody.insertAdjacentHTML('beforeend', InvoicesPage.lineRowHtml(idx, {}, InvoicesPage._items));
+        InvoicesPage.recalc();
     },
 
     removeLine(idx) {
@@ -427,6 +429,7 @@ const InvoicesPage = {
     },
 
     recalc() {
+        TaxExempt.enforce(InvoicesPage._customers, $('#inv-customer-select')?.value, $('#inv-lines'));
         let subtotal = 0, taxable = 0;
         $$('#inv-lines tr').forEach(row => {
             const qty = parseFloat(row.querySelector('.line-qty')?.value) || 0;

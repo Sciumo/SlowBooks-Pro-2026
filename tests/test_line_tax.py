@@ -218,3 +218,59 @@ def test_line_without_flag_attribute_is_taxable(db_session, seed_accounts):
         Decimal("20.00"),
         Decimal("220.00"),
     )
+
+
+def test_a_non_taxable_customer_wins_over_a_ticked_line_box(
+    client, db_session, seed_accounts
+):
+    """The page always sends each line's Tax box, defaulted from the item.
+    The exemption used to fill only UNSET lines, so a reseller billed from the
+    window was charged tax (2.16.2 gate, skytech). The customer wins now —
+    on invoices, estimates and sales receipts — with a taxable control."""
+    exempt = client.post(
+        "/api/customers", json={"name": "Boise Reseller", "is_taxable": False}
+    ).json()
+    normal = client.post("/api/customers", json={"name": "Walk-in Shop"}).json()
+    part = _item(client, "Neon Flex", 100, True)
+
+    def payload(cust):
+        return {
+            "customer_id": cust["id"],
+            "date": "2026-07-01",
+            "tax_rate": 0.089,
+            "lines": [
+                {"item_id": part["id"], "quantity": 1, "rate": 100, "is_taxable": True}
+            ],
+        }
+
+    for path in ("/api/invoices", "/api/estimates", "/api/sales-receipts"):
+        body = payload(exempt)
+        if path == "/api/sales-receipts":
+            body["method"] = "cash"
+        r = client.post(path, json=body)
+        assert r.status_code in (200, 201), (path, r.text)
+        doc = r.json()
+        tax = doc.get("tax_amount", doc.get("invoice", {}).get("tax_amount"))
+        assert Decimal(str(tax)) == Decimal("0.00"), (path, doc)
+
+        body = payload(normal)
+        if path == "/api/sales-receipts":
+            body["method"] = "cash"
+        r = client.post(path, json=body)
+        doc = r.json()
+        tax = doc.get("tax_amount", doc.get("invoice", {}).get("tax_amount"))
+        assert Decimal(str(tax)) == Decimal("8.90"), (path, doc)
+
+
+def test_the_sales_forms_show_the_exemption():
+    from pathlib import Path
+
+    js = Path(__file__).resolve().parents[1] / "app" / "static" / "js"
+    assert "const TaxExempt = {" in (js / "utils.js").read_text(encoding="utf-8")
+    for page, obj, sel in (
+        ("invoices.js", "InvoicesPage", "inv-customer-select"),
+        ("estimates.js", "EstimatesPage", "est-customer-select"),
+        ("sales_receipts.js", "SalesReceiptsPage", "sr-customer-select"),
+    ):
+        src = (js / page).read_text(encoding="utf-8")
+        assert f"TaxExempt.enforce({obj}._customers, $('#{sel}')?.value" in src, page

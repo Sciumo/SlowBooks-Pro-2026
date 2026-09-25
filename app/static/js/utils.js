@@ -326,6 +326,34 @@ async function classFormGroupHtml(selectedId) {
 // Form 990 Part IX columns). Only rendered in nonprofit mode; a blank
 // value means "default from the fund" (the server fills it at posting).
 // ---------------------------------------------------------------------------
+// A customer marked non-taxable (reseller permit, exempt organization) pays
+// no sales tax on any line. The server enforces it; this makes the page say
+// so instead of showing ticked Tax boxes that will not be charged. Called
+// from each sales form's recalc(), so it holds after a customer change, an
+// item pick or a new line. A box's own state is kept and restored when the
+// form switches back to a taxable customer.
+const TaxExempt = {
+    enforce(customers, customerId, tbody) {
+        const c = (customers || []).find(x => x.id == customerId);
+        const exempt = !!c && c.is_taxable === false;
+        if (!tbody) return exempt;
+        tbody.querySelectorAll('.line-taxable').forEach(box => {
+            if (exempt) {
+                if (!box.disabled) box.dataset.was = box.checked ? '1' : '0';
+                box.checked = false;
+                box.disabled = true;
+                box.title = `${c.name} is non-taxable (reseller or exempt): no sales tax on any line`;
+            } else if (box.disabled) {
+                box.disabled = false;
+                box.checked = box.dataset.was !== '0';
+                box.title = 'Sales tax applies to this line';
+            }
+        });
+        return exempt;
+    },
+};
+window.TaxExempt = TaxExempt;
+
 const Nonprofit = {
     FUNCTIONS: [['program', 'Program services'], ['management', 'Management & general'], ['fundraising', 'Fundraising']],
     enabled() { return Terms.isNonprofit(); },

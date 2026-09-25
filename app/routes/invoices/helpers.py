@@ -39,15 +39,21 @@ def _due_date_from_terms(base_date: date, terms: str | None) -> date:
 
 
 def resolve_line_taxable(db: Session, lines_data, customer=None) -> None:
-    """Fill in is_taxable on line payloads that left it None: the item's
-    flag when there is an item, else taxable — unless the customer is
-    marked non-taxable, in which case every unset line is non-taxable.
-    Mutates the pydantic line objects in place so the same objects feed
-    both the totals and the stored rows."""
+    """Decide is_taxable on every line. A customer marked non-taxable (a
+    reseller permit, an exempt organization) pays no sales tax on ANY line,
+    whatever the line says — the page always sends each line's tax box,
+    defaulted from the item, so an exemption that only filled unset lines
+    was never consulted for anything made at the window (2.16.2 gate,
+    skytech: 8.90 charged where 0.00 was owed). Otherwise an unset line
+    takes the item's flag, else taxable. Mutates the pydantic line objects
+    in place so the same objects feed both the totals and the stored rows."""
     from app.models.items import Item
 
     cust_taxable = True if customer is None else (customer.is_taxable is not False)
     for ln in lines_data:
+        if not cust_taxable:
+            ln.is_taxable = False
+            continue
         if getattr(ln, "is_taxable", None) is not None:
             continue
         default = cust_taxable

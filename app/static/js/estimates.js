@@ -77,6 +77,7 @@ const EstimatesPage = {
     _customers: [],
 
     customerSelected(customerId) {
+        setTimeout(() => EstimatesPage.recalc(), 0);
         if (customerId === '__new__') {
             const form = $('#est-new-customer-form');
             if (form) form.style.display = 'block';
@@ -206,6 +207,7 @@ const EstimatesPage = {
         const tbody = $('#est-lines');
         const idx = EstimatesPage.lineCount++;
         tbody.insertAdjacentHTML('beforeend', EstimatesPage.lineRowHtml(idx, {}, EstimatesPage._items));
+        EstimatesPage.recalc();
     },
 
     removeLine(idx) {
@@ -232,6 +234,7 @@ const EstimatesPage = {
     },
 
     recalc() {
+        TaxExempt.enforce(EstimatesPage._customers, $('#est-customer-select')?.value, $('#est-lines'));
         let subtotal = 0, taxable = 0;
         $$('#est-lines tr').forEach(row => {
             const qty = parseFloat(row.querySelector('.line-qty')?.value) || 0;
