@@ -88,8 +88,9 @@ const BankingPage = {
     },
 
     // ------------------------------------------------------------------
-    // SimpleFIN bank feeds — the user brings their own bridge credential
-    // (bridge.simplefin.org); we claim the token once, then sync on click.
+    // SimpleFIN bank feeds — the user brings their own credential from any
+    // SimpleFIN server (bridge.simplefin.org or another provider); we claim
+    // the token once, then sync on click.
     // ------------------------------------------------------------------
     _renderFeedSection(feed, feeds) {
         let body;
@@ -97,8 +98,9 @@ const BankingPage = {
             body = `
                 <p style="font-size:12px; margin-bottom:8px;">
                     Pull transactions straight from your bank — no file exports.
-                    Sign up at <a href="https://bridge.simplefin.org" target="_blank" rel="noopener">bridge.simplefin.org</a>,
-                    connect your bank there, then paste your <strong>setup token</strong> below.
+                    Connect your bank at any SimpleFIN provider — the reference one is
+                    <a href="https://bridge.simplefin.org" target="_blank" rel="noopener">bridge.simplefin.org</a> —
+                    then paste the <strong>setup token</strong> it gives you below.
                     Your credential stays on this machine; SlowBooks has no middleman server.
                 </p>
                 <form onsubmit="BankingPage.connectSimpleFIN(event)">
