@@ -7,6 +7,23 @@ on what the software does, not on what sprint shipped what.
 
 ## [Unreleased]
 
+### v2.16.3 — The Docker image starts again
+
+**A freshly built Docker image failed to start.** SQLAlchemy 2.1.0, released
+this week, makes a plain `postgresql://` address use the psycopg 3 driver; the
+image installs psycopg2, so the app could not import and the container exited.
+Anyone building the server or Docker install from scratch since the release
+was affected, on 2.16.1 and 2.16.2 alike. SQLAlchemy is pinned below 2.1, the
+version every release has been tested on; moving to 2.1 will be its own
+release. v2.16.2 was tagged past the red check that showed this — a miss in
+the release process, and the Linux QA lane now builds the image from nothing
+every time.
+
+The desktop apps use SQLite and are unaffected; this release changes nothing
+for them.
+
+No schema change.
+
 ### v2.16.2 — Tax-exempt customers, wider amounts, and two forms put right
 
 **The estimate's line items line up with their headings** (#176, @cnbarry1).

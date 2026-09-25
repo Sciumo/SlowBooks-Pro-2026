@@ -60,7 +60,7 @@ every point and agrees with the report. Contributed by @jarvis4openclaw
 Wave's full export importing no journals after a passing dry run (#169);
 2.16.2 stops charging tax to non-taxable customers, widens every money
 column for large-denomination currencies (#173), and puts the estimate and
-job-cost forms right (#174, #176).
+job-cost forms right (#174, #176); 2.16.3 lets a fresh Docker image start again.
 
 **v2.15 — Your chart, from your file.** Import a chart of accounts from a
 CSV in the export's own columns, any spreadsheet with Number / Name / Type,
