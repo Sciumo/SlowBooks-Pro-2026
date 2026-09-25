@@ -274,3 +274,16 @@ def test_the_sales_forms_show_the_exemption():
     ):
         src = (js / page).read_text(encoding="utf-8")
         assert f"TaxExempt.enforce({obj}._customers, $('#{sel}')?.value" in src, page
+
+
+def test_the_estimate_preview_taxes_only_the_ticked_lines():
+    """The estimate page built the taxable base and then taxed the subtotal,
+    so its on-screen tax ignored every Tax box — $8.90 shown, 0.00 saved
+    (macbase1, 2.16.2 gate). It reads the same as the invoice page now."""
+    from pathlib import Path
+
+    js = Path(__file__).resolve().parents[1] / "app" / "static" / "js"
+    for page in ("estimates.js", "invoices.js", "sales_receipts.js"):
+        src = (js / page).read_text(encoding="utf-8")
+        assert "const tax = taxable * (taxPct / 100);" in src, page
+        assert "const tax = subtotal * (taxPct / 100);" not in src, page

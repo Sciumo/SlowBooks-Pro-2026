@@ -40,6 +40,15 @@ now, and the forms clear and disable the Tax boxes and say why. Found by
 the Windows lane on this release's gate. Documents already saved keep the
 tax they were saved with; check any open invoice to a reseller.
 
+**The estimate screen shows the tax it will charge.** It taxed the subtotal
+on screen instead of the ticked lines, so an unticked Tax box — for any
+customer — still showed tax before saving; the saved estimate was always
+right. It reads the same as the invoice screen now (macOS lane, this gate).
+
+**The licence link on the splash reads at AA in the light theme** (4.29 : 1
+before, 5.44 now, measured in a rendered browser). The dark theme's licence
+block, fixed in 2.15.0, measures 7.23 to 15.23.
+
 **Money columns hold up to 9,999,999,999,999.99** (#173, @6lb). Every
 amount column widens from 12 to 15 digits, for currencies whose everyday
 amounts are large — 9,999,999,999.99 dong is about US$400,000. Rates,

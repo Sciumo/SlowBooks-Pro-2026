@@ -1138,7 +1138,10 @@ tr.clickable { cursor: pointer; }
 .splash-terms-title { font-weight: 700; margin-bottom: 6px; }
 .splash-terms-list { margin: 0; padding-left: 18px; }
 .splash-terms-list li { margin-bottom: 6px; }
-.splash-terms a { color: var(--text-link, #1a56db); }
+/* the link to LICENSE sat at 4.29:1 on the light panel (measured in headless
+   Chromium, 2.16.2 gate); the navy the button uses reads at AA there. The dark
+   theme overrides it in dark.css. */
+.splash-terms a { color: #002244; font-weight: 600; }
 
 .splash-legal {
     font-size: 8px;

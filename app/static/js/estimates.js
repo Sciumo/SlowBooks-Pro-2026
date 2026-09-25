@@ -246,7 +246,7 @@ const EstimatesPage = {
             if (amountCell) amountCell.textContent = formatCurrency(amount);
         });
         const taxPct = parseFloat($('[name="tax_rate"]')?.value) || 0;
-        const tax = subtotal * (taxPct / 100);
+        const tax = taxable * (taxPct / 100);
         if ($('#est-subtotal')) $('#est-subtotal').textContent = formatCurrency(subtotal);
         if ($('#est-tax')) $('#est-tax').textContent = formatCurrency(tax);
         if ($('#est-total')) $('#est-total').textContent = formatCurrency(subtotal + tax);
