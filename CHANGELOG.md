@@ -19,8 +19,12 @@ release. v2.16.2 was tagged past the red check that showed this — a miss in
 the release process, and the Linux QA lane now builds the image from nothing
 every time.
 
-The desktop apps use SQLite and are unaffected; this release changes nothing
-for them.
+The desktop apps use SQLite and are unaffected by the Docker fault.
+
+**The What's New box on the splash reads in the dark theme.** It had the
+light panel the licence block had before 2.15.0 and was never given a dark
+one: 2.34 : 1 in dark, now 11.95 to 15.23, measured in a rendered browser.
+Found by the macOS lane and reproduced at the window by the owner.
 
 No schema change.
 

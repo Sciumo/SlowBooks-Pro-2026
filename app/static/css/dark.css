@@ -313,6 +313,15 @@
 [data-theme="dark"] .splash-terms strong { color: #ffffff; }
 [data-theme="dark"] .splash-terms a { color: #8ab4f8; }
 [data-theme="dark"] .splash-btn { color: #002244; }
+/* The What's New box beside it had the same light panel and was never given
+   a dark one: light text on pale grey, unreadable (macbase1 and the owner,
+   2.16.3 gate). The same panel as the licence block. */
+[data-theme="dark"] .splash-whatsnew {
+    background: #1e2632;
+    border-color: #3a4656;
+    color: #e0e4ec;
+}
+[data-theme="dark"] .splash-whatsnew-title { color: #ffffff; }
 
 /* Line items table */
 [data-theme="dark"] .line-items-table { border-color: var(--panel-border); }
