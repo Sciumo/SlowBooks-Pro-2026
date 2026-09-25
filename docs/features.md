@@ -64,10 +64,12 @@ The register is the ledger account (v2.10, issue #114). Full guide: [docs/bankin
 - **QuickBooks-style period selector** — All reports support preset periods (This Month, This Quarter, This/Last Year, Year to Date, Custom Date) with live refresh
 - **Profit & Loss** — Income vs expenses for any date range
 - **Balance Sheet** — Assets, liabilities, and equity as of any date
+- **Trial Balance** — Every account's debit or credit balance for the period, with totals that must agree
+- **Save as spreadsheet / printable** — Profit & Loss, Balance Sheet, Trial Balance and General Ledger each save as a CSV (amounts as plain numbers, one row per line, ready for Excel or LibreOffice) and a PDF. The figures in the file are the figures on the screen
 - **A/R Aging** — Outstanding receivables grouped by customer with 30/60/90 day buckets
 - **A/P Aging** — Outstanding payables grouped by vendor with 30/60/90 day buckets
 - **Sales Tax** — Per-line taxable flag (defaults from the item and the customer) so untaxed labor and a taxed part share one invoice; the rate lives on the document. Sales Tax report shows the taxable base and tax collected. Pay Sales Tax feature records payments to government (DR Sales Tax Payable, CR Bank)
-- **General Ledger** — All journal entries grouped by account with debit/credit totals
+- **General Ledger** — Every posted line grouped by account: balance brought forward, running balance, the source document type, and a period total that ties to the Trial Balance
 - **Income by Customer** — Sales totals per customer with invoice counts
 - **Customer Statements** — PDF statement with invoice/payment history and running balance
 - **Schedule C (Tax)** — Generate Schedule C data from P&L with configurable account-to-tax-line mappings. Export as CSV
@@ -517,13 +519,14 @@ All payroll, HR, tax-form, and self-service portal endpoints are documented with
 ### Reports & Tax
 | Endpoint | Methods | Description |
 |----------|---------|-------------|
-| `/api/reports/profit-loss` | GET | P&L report |
-| `/api/reports/balance-sheet` | GET | Balance sheet |
+| `/api/reports/profit-loss` (+`/pdf`, `/csv`) | GET | P&L report |
+| `/api/reports/balance-sheet` (+`/pdf`, `/csv`) | GET | Balance sheet |
+| `/api/reports/trial-balance` (+`/pdf`, `/csv`) | GET | Trial balance, debit and credit columns with totals |
 | `/api/reports/ar-aging` | GET | Accounts receivable aging |
 | `/api/reports/ap-aging` | GET | Accounts payable aging |
 | `/api/reports/sales-tax` | GET | Sales tax collected |
 | `/api/reports/sales-tax/pay` | POST | Record sales tax payment to government |
-| `/api/reports/general-ledger` | GET | All journal entries by account |
+| `/api/reports/general-ledger` (+`/pdf`, `/csv`) | GET | Every posted line by account: balance brought forward, running balance, source, period total |
 | `/api/reports/income-by-customer` | GET | Sales totals per customer |
 | `/api/tax/schedule-c` | GET | Schedule C data from P&L |
 | `/api/tax/schedule-c/csv` | GET | Schedule C CSV export |

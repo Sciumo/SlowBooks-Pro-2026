@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from fastapi import Depends, HTTPException, Query
+from fastapi import Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func as sqlfunc, select
 
@@ -163,8 +163,30 @@ def general_ledger(
     if account_id:
         q = q.filter(TransactionLine.account_id == account_id)
 
-    q = q.order_by(Account.account_number, Transaction.date)
+    # date, then posting order: a stable order is what makes a running
+    # balance mean the same thing on screen and in an export (#179)
+    q = q.order_by(
+        Account.account_number, Transaction.date, Transaction.id, TransactionLine.id
+    )
     results = q.all()
+
+    # Balance brought forward per account: everything posted before the
+    # period, debit minus credit — the same sign as the trial balance's Net.
+    ids = {acct.id for _, _, acct in results}
+    opening = {}
+    if ids:
+        for acct_id, dr, cr in (
+            db.query(
+                TransactionLine.account_id,
+                sqlfunc.coalesce(sqlfunc.sum(TransactionLine.debit), 0),
+                sqlfunc.coalesce(sqlfunc.sum(TransactionLine.credit), 0),
+            )
+            .join(Transaction, TransactionLine.transaction_id == Transaction.id)
+            .filter(Transaction.date < start_date, TransactionLine.account_id.in_(ids))
+            .group_by(TransactionLine.account_id)
+            .all()
+        ):
+            opening[acct_id] = Decimal(str(dr)) - Decimal(str(cr))
 
     entries_by_account = {}
     for tl, txn, acct in results:
@@ -175,24 +197,32 @@ def general_ledger(
                 "account_number": acct.account_number,
                 "account_name": acct.name,
                 "account_type": acct.account_type.value,
+                "opening_balance": opening.get(acct.id, Decimal(0)),
                 "entries": [],
                 "total_debit": Decimal(0),
                 "total_credit": Decimal(0),
+                "_running": opening.get(acct.id, Decimal(0)),
             }
-        entries_by_account[key]["entries"].append(
+        a = entries_by_account[key]
+        a["_running"] += tl.debit - tl.credit
+        a["entries"].append(
             {
                 "date": txn.date.isoformat(),
                 "description": txn.description or tl.description or "",
                 "reference": txn.reference or "",
                 "debit": float(tl.debit),
                 "credit": float(tl.credit),
+                "running_balance": float(a["_running"]),
+                "source_type": txn.source_type or "journal",
             }
         )
-        entries_by_account[key]["total_debit"] += tl.debit
-        entries_by_account[key]["total_credit"] += tl.credit
+        a["total_debit"] += tl.debit
+        a["total_credit"] += tl.credit
 
     accounts_list = list(entries_by_account.values())
     for a in accounts_list:
+        a["closing_balance"] = float(a.pop("_running"))
+        a["opening_balance"] = float(a["opening_balance"])
         a["total_debit"] = float(a["total_debit"])
         a["total_credit"] = float(a["total_credit"])
 
@@ -616,6 +646,71 @@ def _tb_section(data: dict) -> dict:
     }
 
 
+def _gl_section(data: dict) -> dict:
+    rows = []
+    for a in data["accounts"]:
+        head = f"{a['account_number'] or ''} {a['account_name']}".strip()
+        rows.append({"cells": [head, "", "", "", "", ""], "style": "subtotal"})
+        rows.append(
+            {
+                "cells": [
+                    "",
+                    "",
+                    "Balance brought forward",
+                    "",
+                    "",
+                    _money(a["opening_balance"]),
+                ]
+            }
+        )
+        for e in a["entries"]:
+            rows.append(
+                {
+                    "cells": [
+                        e["date"],
+                        e["reference"],
+                        e["description"],
+                        _money(e["debit"]) if e["debit"] else "",
+                        _money(e["credit"]) if e["credit"] else "",
+                        _money(e["running_balance"]),
+                    ]
+                }
+            )
+        rows.append(
+            {
+                "cells": [
+                    "",
+                    "",
+                    "Period total",
+                    _money(a["total_debit"]),
+                    _money(a["total_credit"]),
+                    _money(a["closing_balance"]),
+                ],
+                "style": "subtotal",
+            }
+        )
+    return {
+        "title": "General Ledger",
+        "period": f"{data['start_date']} — {data['end_date']}",
+        "columns": ["Date", "Reference", "Description", "Debit", "Credit", "Balance"],
+        "rows": rows,
+    }
+
+
+def _company_name(db) -> str:
+    from app.services.settings_service import get_all_settings
+
+    return get_all_settings(db).get("company_name") or ""
+
+
+def _csv_download(text: str, filename: str, request: Request):
+    """The same Content-Disposition rule as the CSV page: inline for the
+    desktop shell (which saves it itself), attachment for a browser."""
+    from app.routes.csv import _csv_response
+
+    return _csv_response(text, filename, request)
+
+
 def _pdf_response(sections, db, filename: str):
     from fastapi.responses import Response
     from app.services.pdf_service import generate_report_pdf
@@ -641,6 +736,105 @@ def profit_loss_pdf(
         [_pl_section(data, t)],
         db,
         f"{t.slug('Profit & Loss')}_{data['start_date']}_{data['end_date']}.pdf",
+    )
+
+
+@router.get("/trial-balance/pdf")
+def trial_balance_pdf(
+    start_date: date = Query(default=None),
+    end_date: date = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    data = trial_balance(start_date, end_date, db)
+    return _pdf_response(
+        [_tb_section(data)],
+        db,
+        f"trial-balance_{data['start_date']}_{data['end_date']}.pdf",
+    )
+
+
+@router.get("/trial-balance/csv")
+def trial_balance_csv_route(
+    request: Request,
+    start_date: date = Query(default=None),
+    end_date: date = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    from app.services.ledger_exports import trial_balance_csv
+
+    data = trial_balance(start_date, end_date, db)
+    return _csv_download(
+        trial_balance_csv(data, _company_name(db)),
+        f"trial-balance_{data['start_date']}_{data['end_date']}.csv",
+        request,
+    )
+
+
+@router.get("/general-ledger/pdf")
+def general_ledger_pdf(
+    start_date: date = Query(default=None),
+    end_date: date = Query(default=None),
+    account_id: int = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    data = general_ledger(start_date, end_date, account_id, db)
+    return _pdf_response(
+        [_gl_section(data)],
+        db,
+        f"general-ledger_{data['start_date']}_{data['end_date']}.pdf",
+    )
+
+
+@router.get("/general-ledger/csv")
+def general_ledger_csv_route(
+    request: Request,
+    start_date: date = Query(default=None),
+    end_date: date = Query(default=None),
+    account_id: int = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    from app.services.ledger_exports import general_ledger_csv
+
+    data = general_ledger(start_date, end_date, account_id, db)
+    return _csv_download(
+        general_ledger_csv(data, _company_name(db)),
+        f"general-ledger_{data['start_date']}_{data['end_date']}.csv",
+        request,
+    )
+
+
+@router.get("/profit-loss/csv")
+def profit_loss_csv_route(
+    request: Request,
+    start_date: date = Query(default=None),
+    end_date: date = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    from app.services.ledger_exports import profit_loss_csv
+
+    data = profit_loss(start_date, end_date, db)
+    t = terms_from_db(db)
+    return _csv_download(
+        profit_loss_csv(data, _company_name(db), t),
+        f"{t.slug('Profit & Loss')}_{data['start_date']}_{data['end_date']}.csv",
+        request,
+    )
+
+
+@router.get("/balance-sheet/csv")
+def balance_sheet_csv_route(
+    request: Request,
+    as_of_date: date = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    from app.services.ledger_exports import balance_sheet_csv
+
+    data = balance_sheet(as_of_date, db)
+    t = terms_from_db(db)
+    return _csv_download(
+        balance_sheet_csv(data, _company_name(db), t),
+        f"{t.slug('Balance Sheet')}_{data['as_of_date']}.csv",
+        request,
     )
 
 
