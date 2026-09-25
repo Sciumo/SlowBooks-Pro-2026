@@ -1,4 +1,12 @@
 {
+  "2.17.0": {
+    "title": "Your ledger, in a spreadsheet",
+    "items": [
+      "Trial Balance and General Ledger save as a spreadsheet (CSV) and a printable PDF; Profit & Loss and Balance Sheet gain the spreadsheet",
+      "The General Ledger shows each account's balance brought forward, a running balance, the source of every line and a period total that ties to the Trial Balance",
+      "Bank feeds: a SimpleFIN setup token from any SimpleFIN provider connects, not only bridge.simplefin.org"
+    ]
+  },
   "2.16.3": {
     "title": "The Docker image starts again",
     "items": [

@@ -52,6 +52,13 @@ Details, known gaps and how to report a barrier:
 
 ## What's New
 
+**v2.17 — Your ledger, in a spreadsheet.** Trial Balance and General Ledger
+save as a CSV and a printable PDF, and Profit & Loss and Balance Sheet gain
+the CSV — amounts as plain numbers, ready to sum. The general ledger carries
+a balance brought forward, a running balance and a period total that ties to
+the trial balance. Bank feeds accept a setup token from any SimpleFIN
+provider. Asked for by @cnbarry1 (#179, #181).
+
 **v2.16 — The year at a glance.** Two new overview cards, both opt-in under
 Customize: **P&L: Year to Date** with cumulative net by month, and a
 **Balance Sheet Trend** over the last twelve month-ends that balances at
@@ -69,15 +76,6 @@ dry run shows every row's fate first. Accounts you already have take the
 file's names, including the control accounts the software posts to by
 number, renamed in place and never duplicated, so every document still finds
 its account. Asked for by @tresero (#139, #161).
-
-**v2.14 — In and out of a company, and the terms once.** Opening the
-app lands in your last company. Sign out, a new **Switch company** button
-and *Choose a different company* on the sign-in screen return to the
-company picker instead of the same password prompt, which used to mean
-closing the program. A multi-user install lists the users at sign-in. The
-first launch shows the short form of the license once, and the Windows
-installer shows the full license with an accept step — the first release
-under [LICENSE 2.0](LICENSE).
 
 Full history, with the reasoning behind each change, in
 **[CHANGELOG.md](CHANGELOG.md)**; the same entries with the test count
@@ -102,7 +100,7 @@ against any of eight providers (xAI Grok, Groq, Cloudflare Workers AI,
 Anthropic Claude, OpenAI, Google Gemini, a Cloudflare Worker you host
 yourself, or any OpenAI-compatible endpoint you name) — keys encrypted at rest with versioned, rotatable ciphertext.
 And the whole app is agent-operable: every install serves a
-self-documenting local REST API (507 operations in v2.16) — point Claude
+self-documenting local REST API (513 operations in v2.17) — point Claude
 Code or any agentic CLI at it; the
 [AI setup guide](https://www.slowbookspro.com/ai/) has the paste-prompt.
 

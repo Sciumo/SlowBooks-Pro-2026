@@ -7,6 +7,29 @@ on what the software does, not on what sprint shipped what.
 
 ## [Unreleased]
 
+### v2.17.0 — Your ledger, in a spreadsheet
+
+**Trial Balance and General Ledger save as a spreadsheet and a printable
+file** (#179, @cnbarry1); Profit & Loss and Balance Sheet, which already
+printed, gain the spreadsheet. Each report has *Save CSV* and *Save PDF*
+buttons. The files hold the figures on the screen: the trial
+balance with debit, credit and net per account and totals that agree; the
+general ledger with every posted line, a balance brought forward, a running
+balance, the kind of document each line came from, and a period total per
+account whose net equals that account's trial balance line. Amounts are
+written as plain numbers, so a spreadsheet sums them without a conversion
+step; text cells keep the formula guard every other export has. The on-screen
+general ledger gains the same running balance and brought-forward row.
+Exporting reads the books and writes nothing.
+
+**Bank feeds from any SimpleFIN provider** (#181, @cnbarry1). SlowBooks has
+always followed the claim URL inside a setup token, wherever it points, as
+long as it is HTTPS and not a private or local address; the Banking page and
+the setup guide named only bridge.simplefin.org. They now say any SimpleFIN
+provider works.
+
+No schema change. An existing company file opens with no upgrade step.
+
 ### v2.16.3 — The Docker image starts again
 
 **A freshly built Docker image failed to start.** SQLAlchemy 2.1.0, released
