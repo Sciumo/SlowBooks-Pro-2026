@@ -277,6 +277,13 @@ def convert_to_invoice(estimate_id: int, db: Session = Depends(get_db)):
         days = 30
     due_date = estimate.date + timedelta(days=days)
 
+    # A new invoice gets the customer's CURRENT tax treatment, computed —
+    # not the estimate's stored tax (see taxed_copy_lines).
+    from app.services.accounting import compute_line_totals, taxed_copy_lines
+
+    copied = taxed_copy_lines(estimate.lines, estimate.customer)
+    subtotal, tax_amount, total = compute_line_totals(copied, estimate.tax_rate)
+
     invoice = Invoice(
         invoice_number=invoice_number,
         customer_id=estimate.customer_id,
@@ -289,11 +296,11 @@ def convert_to_invoice(estimate_id: int, db: Session = Depends(get_db)):
         bill_city=estimate.bill_city,
         bill_state=estimate.bill_state,
         bill_zip=estimate.bill_zip,
-        subtotal=estimate.subtotal,
+        subtotal=subtotal,
         tax_rate=estimate.tax_rate,
-        tax_amount=estimate.tax_amount,
-        total=estimate.total,
-        balance_due=estimate.total,
+        tax_amount=tax_amount,
+        total=total,
+        balance_due=total,
         class_id=estimate.class_id,
         job_id=estimate.job_id,
         notes=estimate.notes,
@@ -302,7 +309,7 @@ def convert_to_invoice(estimate_id: int, db: Session = Depends(get_db)):
     db.add(invoice)
     db.flush()
 
-    for eline in estimate.lines:
+    for eline, cline in zip(estimate.lines, copied):
         iline = InvoiceLine(
             invoice_id=invoice.id,
             item_id=eline.item_id,
@@ -313,7 +320,7 @@ def convert_to_invoice(estimate_id: int, db: Session = Depends(get_db)):
             class_name=eline.class_name,
             job_id=eline.job_id,
             cost_code_id=eline.cost_code_id,
-            is_taxable=eline.is_taxable,
+            is_taxable=cline.is_taxable,
             line_order=eline.line_order,
         )
         db.add(iline)

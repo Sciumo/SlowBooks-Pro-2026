@@ -287,3 +287,102 @@ def test_the_estimate_preview_taxes_only_the_ticked_lines():
         src = (js / page).read_text(encoding="utf-8")
         assert "const tax = taxable * (taxPct / 100);" in src, page
         assert "const tax = subtotal * (taxPct / 100);" not in src, page
+
+
+def _taxed_while_taxable(client, db_session, path_create, extra=None):
+    """Save a document to a customer while taxable, then mark the customer
+    non-taxable — the field condition of every reseller estimate on a file
+    upgraded to 2.16.2, and of any customer marked exempt later."""
+    from app.models.contacts import Customer
+
+    cust = client.post("/api/customers", json={"name": "Later Exempt"}).json()
+    part = _item(client, "Sign", 100, True)
+    body = {
+        "customer_id": cust["id"],
+        "tax_rate": 0.089,
+        "lines": [
+            {"item_id": part["id"], "quantity": 1, "rate": 100, "is_taxable": True}
+        ],
+    }
+    body.update(extra or {"date": "2026-07-01"})
+    doc = client.post(path_create, json=body).json()
+    db_session.expire_all()
+    c = db_session.get(Customer, cust["id"])
+    c.is_taxable = False
+    db_session.commit()
+    return cust, doc
+
+
+def test_converting_an_old_estimate_uses_the_customers_current_tax(
+    client, db_session, seed_accounts
+):
+    """skytech, 2.16.2 gate: convert copied the estimate's stored tax, so a
+    reseller estimate saved before the fix became a NEW invoice billing 8.90
+    and crediting Sales Tax Payable."""
+    from app.models.transactions import TransactionLine
+
+    _, est = _taxed_while_taxable(client, db_session, "/api/estimates")
+    assert Decimal(str(est["tax_amount"])) == Decimal("8.90")  # the stale figure
+    inv = client.post(f"/api/estimates/{est['id']}/convert").json()
+    assert Decimal(str(inv["tax_amount"])) == Decimal("0.00"), inv
+    assert Decimal(str(inv["total"])) == Decimal("100.00")
+    assert all(ln["is_taxable"] is False for ln in inv["lines"])
+    tax_acct = seed_accounts["2200"].id
+    db_session.expire_all()
+    booked = (
+        db_session.query(TransactionLine)
+        .filter(TransactionLine.account_id == tax_acct, TransactionLine.credit > 0)
+        .count()
+    )
+    assert booked == 0
+
+
+def test_converting_a_taxable_customers_estimate_still_carries_the_tax(
+    client, seed_accounts
+):
+    cust = client.post("/api/customers", json={"name": "Taxable Buyer"}).json()
+    part = _item(client, "Sign", 100, True)
+    est = client.post(
+        "/api/estimates",
+        json={
+            "customer_id": cust["id"],
+            "date": "2026-07-01",
+            "tax_rate": 0.089,
+            "lines": [
+                {"item_id": part["id"], "quantity": 1, "rate": 100, "is_taxable": True}
+            ],
+        },
+    ).json()
+    inv = client.post(f"/api/estimates/{est['id']}/convert").json()
+    assert Decimal(str(inv["tax_amount"])) == Decimal("8.90")
+
+
+def test_duplicating_an_old_invoice_uses_the_customers_current_tax(
+    client, db_session, seed_accounts
+):
+    _, inv = _taxed_while_taxable(client, db_session, "/api/invoices")
+    assert Decimal(str(inv["tax_amount"])) == Decimal("8.90")
+    dup = client.post(f"/api/invoices/{inv['id']}/duplicate").json()
+    assert Decimal(str(dup["tax_amount"])) == Decimal("0.00"), dup
+    assert all(ln["is_taxable"] is False for ln in dup["lines"])
+
+
+def test_a_recurring_run_uses_the_customers_current_tax(
+    client, db_session, seed_accounts
+):
+    from app.models.invoices import Invoice
+    from app.services.recurring_service import generate_due_invoices
+    from datetime import date
+
+    cust, rec = _taxed_while_taxable(
+        client,
+        db_session,
+        "/api/recurring",
+        {"frequency": "monthly", "start_date": "2026-07-01"},
+    )
+    db_session.expire_all()
+    ids = generate_due_invoices(db_session, as_of=date(2026, 7, 2))
+    assert ids, rec
+    inv = db_session.get(Invoice, ids[0])
+    assert inv.customer_id == cust["id"]
+    assert Decimal(str(inv.tax_amount)) == Decimal("0.00")

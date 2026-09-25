@@ -40,6 +40,13 @@ now, and the forms clear and disable the Tax boxes and say why. Found by
 the Windows lane on this release's gate. Documents already saved keep the
 tax they were saved with; check any open invoice to a reseller.
 
+**A new document built from an old one gets the customer's current tax.**
+Converting an estimate, duplicating an invoice and running a recurring
+template copied the source's stored tax, so a reseller estimate saved before
+this release became a new invoice billing tax and crediting Sales Tax
+Payable. All three now compute the tax from the customer as they stand
+today. Found by the Windows lane on this release's gate, on an upgraded file.
+
 **The estimate screen shows the tax it will charge.** It taxed the subtotal
 on screen instead of the ticked lines, so an unticked Tax box — for any
 customer — still showed tax before saving; the saved estimate was always

@@ -389,6 +389,11 @@ def duplicate_invoice(invoice_id: int, db: Session = Depends(get_db)):
         except ValueError:
             pass
 
+    from app.services.accounting import compute_line_totals, taxed_copy_lines
+
+    copied = taxed_copy_lines(original.lines, original.customer)
+    subtotal, tax_amount, total = compute_line_totals(copied, original.tax_rate)
+
     new_invoice = Invoice(
         invoice_number=new_number,
         customer_id=original.customer_id,
@@ -406,11 +411,11 @@ def duplicate_invoice(invoice_id: int, db: Session = Depends(get_db)):
         ship_city=original.ship_city,
         ship_state=original.ship_state,
         ship_zip=original.ship_zip,
-        subtotal=original.subtotal,
+        subtotal=subtotal,
         tax_rate=original.tax_rate,
-        tax_amount=original.tax_amount,
-        total=original.total,
-        balance_due=original.total,
+        tax_amount=tax_amount,
+        total=total,
+        balance_due=total,
         is_pledge=original.is_pledge,
         fair_value_amount=original.fair_value_amount,
         fair_value_description=original.fair_value_description,
@@ -421,7 +426,7 @@ def duplicate_invoice(invoice_id: int, db: Session = Depends(get_db)):
     db.add(new_invoice)
     db.flush()
 
-    for oline in original.lines:
+    for oline, cline in zip(original.lines, copied):
         new_line = InvoiceLine(
             invoice_id=new_invoice.id,
             item_id=oline.item_id,
@@ -430,6 +435,7 @@ def duplicate_invoice(invoice_id: int, db: Session = Depends(get_db)):
             rate=oline.rate,
             amount=oline.amount,
             class_name=oline.class_name,
+            is_taxable=cline.is_taxable,
             line_order=oline.line_order,
         )
         db.add(new_line)

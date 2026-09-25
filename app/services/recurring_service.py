@@ -15,6 +15,7 @@ from app.models.invoices import Invoice, InvoiceLine
 from app.models.items import Item
 from app.services.numbering import next_invoice_number
 from app.services.accounting import (
+    taxed_copy_lines,
     _q,
     compute_line_totals,
     create_journal_entry,
@@ -75,7 +76,9 @@ def generate_due_invoices(db: Session, as_of: date = None) -> list[int]:
         # line amounts, and journal credits land on the same cents as the
         # A/R debit once SQL rounds.
         tax_rate = rec.tax_rate or Decimal("0")
-        subtotal, tax_amount, total = compute_line_totals(rec.lines, tax_rate)
+        # the customer's CURRENT tax treatment, not the template's saved flags
+        copied = taxed_copy_lines(rec.lines, rec.customer)
+        subtotal, tax_amount, total = compute_line_totals(copied, tax_rate)
 
         # Parse terms for due date
         due_date = rec.next_due + timedelta(days=30)
@@ -126,7 +129,7 @@ def generate_due_invoices(db: Session, as_of: date = None) -> list[int]:
         if invoice is None:
             continue
 
-        for rline in rec.lines:
+        for rline, cline in zip(rec.lines, copied):
             db.add(
                 InvoiceLine(
                     invoice_id=invoice.id,
@@ -134,7 +137,7 @@ def generate_due_invoices(db: Session, as_of: date = None) -> list[int]:
                     description=rline.description,
                     quantity=rline.quantity,
                     rate=rline.rate,
-                    is_taxable=rline.is_taxable,
+                    is_taxable=cline.is_taxable,
                     amount=_q(Decimal(str(rline.quantity)) * Decimal(str(rline.rate))),
                     line_order=rline.line_order,
                 )
