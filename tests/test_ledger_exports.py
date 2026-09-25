@@ -80,6 +80,13 @@ def test_general_ledger_carries_every_line_and_ties_to_the_trial_balance(client,
     assert Decimal(str(cash["opening_balance"])) == Decimal("500.00")
     assert [e["running_balance"] for e in cash["entries"]] == [1700.0, 1400.0, 1354.5]
     assert all(e["source_type"] for e in cash["entries"])
+    # a credit-normal account reads in its own sign, as the balance sheet and
+    # the overview show it: income of 500 brought forward, 1,700 after JE-1
+    sales = next(a for a in gl["accounts"] if a["account_number"] == "4000")
+    assert sales["normal_balance"] == "credit" and cash["normal_balance"] == "debit"
+    assert Decimal(str(sales["opening_balance"])) == Decimal("500.00")
+    assert [e["running_balance"] for e in sales["entries"]] == [1700.0]
+    assert sales["closing_balance"] == 1700.0
 
     rows = rows_of(client.get(f"/api/reports/general-ledger/csv?{PERIOD}").text)
     assert rows[0][:3] == ["Date", "Reference", "Description"] and rows[0][-2:] == [
@@ -95,8 +102,13 @@ def test_general_ledger_carries_every_line_and_ties_to_the_trial_balance(client,
         assert dr - cr == tb_net[num], num  # the period net equals the TB's Net
     opening = {r[3]: Decimal(r[7]) for r in rows[1:] if r[-1] == "opening"}
     closing = {r[3]: Decimal(r[7]) for r in rows[1:] if r[-1] == "total"}
+    sign = {
+        a["account_number"]: 1 if a["normal_balance"] == "debit" else -1
+        for a in gl["accounts"]
+    }
     for num in closing:
-        assert closing[num] == opening[num] + tb_net[num], num
+        assert closing[num] == opening[num] + sign[num] * tb_net[num], num
+    assert closing["4000"] == Decimal("1700.00")  # positive: income earned, not -1,700
 
 
 def test_profit_loss_and_balance_sheet_save_as_spreadsheets(client, books):

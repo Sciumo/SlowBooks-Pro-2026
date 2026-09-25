@@ -69,7 +69,7 @@ The register is the ledger account (v2.10, issue #114). Full guide: [docs/bankin
 - **A/R Aging** — Outstanding receivables grouped by customer with 30/60/90 day buckets
 - **A/P Aging** — Outstanding payables grouped by vendor with 30/60/90 day buckets
 - **Sales Tax** — Per-line taxable flag (defaults from the item and the customer) so untaxed labor and a taxed part share one invoice; the rate lives on the document. Sales Tax report shows the taxable base and tax collected. Pay Sales Tax feature records payments to government (DR Sales Tax Payable, CR Bank)
-- **General Ledger** — Every posted line grouped by account: balance brought forward, running balance, the source document type, and a period total that ties to the Trial Balance
+- **General Ledger** — Every posted line grouped by account: balance brought forward, running balance in the account's natural sign (a payable or income reads positive), the source document type, and a period total that ties to the Trial Balance
 - **Income by Customer** — Sales totals per customer with invoice counts
 - **Customer Statements** — PDF statement with invoice/payment history and running balance
 - **Schedule C (Tax)** — Generate Schedule C data from P&L with configurable account-to-tax-line mappings. Export as CSV

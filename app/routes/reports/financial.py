@@ -171,7 +171,11 @@ def general_ledger(
     results = q.all()
 
     # Balance brought forward per account: everything posted before the
-    # period, debit minus credit — the same sign as the trial balance's Net.
+    # period. Balances read in the account's natural sign, as the balance
+    # sheet and the overview show them: a debit-normal account (asset,
+    # expense, COGS) is debit minus credit, every other account credit minus
+    # debit, so a payable you owe reads positive. The debit and credit
+    # columns are untouched, so period Dr - Cr still equals the TB's Net.
     ids = {acct.id for _, _, acct in results}
     opening = {}
     if ids:
@@ -188,6 +192,9 @@ def general_ledger(
         ):
             opening[acct_id] = Decimal(str(dr)) - Decimal(str(cr))
 
+    def _sign(acct):
+        return 1 if acct.account_type in _DEBIT_NORMAL else -1
+
     entries_by_account = {}
     for tl, txn, acct in results:
         key = acct.id
@@ -197,14 +204,15 @@ def general_ledger(
                 "account_number": acct.account_number,
                 "account_name": acct.name,
                 "account_type": acct.account_type.value,
-                "opening_balance": opening.get(acct.id, Decimal(0)),
+                "normal_balance": "debit" if _sign(acct) > 0 else "credit",
+                "opening_balance": _sign(acct) * opening.get(acct.id, Decimal(0)),
                 "entries": [],
                 "total_debit": Decimal(0),
                 "total_credit": Decimal(0),
-                "_running": opening.get(acct.id, Decimal(0)),
+                "_running": _sign(acct) * opening.get(acct.id, Decimal(0)),
             }
         a = entries_by_account[key]
-        a["_running"] += tl.debit - tl.credit
+        a["_running"] += _sign(acct) * (tl.debit - tl.credit)
         a["entries"].append(
             {
                 "date": txn.date.isoformat(),

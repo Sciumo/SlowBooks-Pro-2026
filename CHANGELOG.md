@@ -16,7 +16,11 @@ buttons. The files hold the figures on the screen: the trial
 balance with debit, credit and net per account and totals that agree; the
 general ledger with every posted line, a balance brought forward, a running
 balance, the kind of document each line came from, and a period total per
-account whose net equals that account's trial balance line. Amounts are
+account whose net equals that account's trial balance line. Balances read
+in each account's natural sign, the way the balance sheet shows them: an
+asset or expense is debit minus credit, a liability, equity or income account
+credit minus debit, so a payable you owe and income you earned read positive.
+Amounts are
 written as plain numbers, so a spreadsheet sums them without a conversion
 step; text cells keep the formula guard every other export has. The on-screen
 general ledger gains the same running balance and brought-forward row.
