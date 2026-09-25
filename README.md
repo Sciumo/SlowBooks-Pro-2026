@@ -58,7 +58,9 @@ Customize: **P&L: Year to Date** with cumulative net by month, and a
 every point and agrees with the report. Contributed by @jarvis4openclaw
 (#166). The chart of accounts import offers a CSV template. 2.16.1 fixes
 Wave's full export importing no journals after a passing dry run (#169);
-2.16.2 puts the estimate and job-cost line-item forms right (#174, #176).
+2.16.2 stops charging tax to non-taxable customers, widens every money
+column for large-denomination currencies (#173), and puts the estimate and
+job-cost forms right (#174, #176).
 
 **v2.15 — Your chart, from your file.** Import a chart of accounts from a
 CSV in the export's own columns, any spreadsheet with Number / Name / Type,

@@ -7,7 +7,7 @@ on what the software does, not on what sprint shipped what.
 
 ## [Unreleased]
 
-### v2.16.2 — Two line-item forms, put right
+### v2.16.2 — Tax-exempt customers, wider amounts, and two forms put right
 
 **The estimate's line items line up with their headings** (#176, @cnbarry1).
 The header read Item, Description, Cost code, Cost, Qty while the cells
@@ -31,7 +31,24 @@ what the setup does and does not give you. On the way, the production
 compose file now passes `TRUST_PROXY_HEADERS` into the container, so the
 proxy trust the TLS guide describes takes effect under Docker.
 
-No schema change. An existing company file opens with no upgrade step.
+**A customer marked non-taxable pays no sales tax on any line.** The
+exemption only filled lines that left their tax flag unset, and every sales
+form sends each line's Tax box, defaulted from the item — so a reseller or
+exempt customer billed from the window was charged tax. Invoices,
+estimates, recurring templates and sales receipts all honour the customer
+now, and the forms clear and disable the Tax boxes and say why. Found by
+the Windows lane on this release's gate. Documents already saved keep the
+tax they were saved with; check any open invoice to a reseller.
+
+**Money columns hold up to 9,999,999,999,999.99** (#173, @6lb). Every
+amount column widens from 12 to 15 digits, for currencies whose everyday
+amounts are large — 9,999,999,999.99 dong is about US$400,000. Rates,
+quantities and exchange rates are unchanged.
+
+**Schema change:** one migration widens the money columns. The desktop app
+and the Docker image apply it when a company file opens; a self-managed
+server runs `alembic upgrade head`. Nothing is converted — the stored
+amounts are the same numbers in a wider column.
 
 ### v2.16.1 — Wave's full export imports its journals
 
